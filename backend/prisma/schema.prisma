@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  typingSessions TypingSession[]
+  statistics     UserStatistics?
+
+  @@map("users")
+}
+
+model TypingSession {
+  id        String   @id @default(uuid())
+  userId    String
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  duration  Int      @default(60) // Duration in seconds, fixed at 60 for MVP
+  status    String   @default("in_progress") // in_progress, completed, abandoned
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  typingResults TypingResult[]
+
+  @@map("typing_sessions")
+}
+
+model TypingResult {
+  id              String   @id @default(uuid())
+  sessionId       String
+  targetKey       String   // The key that was supposed to be pressed
+  pressedKey      String?  // The key that was actually pressed (null if timeout)
+  isCorrect       Boolean
+  responseTime    Int      // Time in milliseconds from key highlight to key press
+  keyPressedAt    DateTime @default(now())
+
+  session TypingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("typing_results")
+}
+
+model UserStatistics {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  totalSessions       Int      @default(0)
+  totalKeyPresses     Int      @default(0)
+  correctKeyPresses   Int      @default(0)
+  averageKPM          Float    @default(0) // Keys Per Minute
+  bestKPM             Float    @default(0)
+  averageAccuracy     Float    @default(0) // Percentage
+  bestAccuracy        Float    @default(0) // Percentage
+  averageResponseTime Float    @default(0) // Average response time in milliseconds
+  bestResponseTime    Float    @default(0) // Best average response time
+  lastSessionAt       DateTime?
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_statistics")
+}
