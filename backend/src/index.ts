@@ -1,13 +1,14 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import authRoutes from './routes/authRoutes';
+import sessionRoutes from './routes/sessionRoutes';
+import statisticsRoutes from './routes/statisticsRoutes';
+import { errorHandler } from './middleware/errorHandler';
+import prisma from './config/database';
 
 // Load environment variables
 dotenv.config();
-
-// Initialize Prisma Client
-export const prisma = new PrismaClient();
 
 // Initialize Express app
 const app: Application = express();
@@ -30,7 +31,7 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// API routes (to be added)
+// API routes
 app.get('/api', (req: Request, res: Response) => {
   res.json({ 
     message: 'Pro Dev API v1.0',
@@ -43,19 +44,18 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: any) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/statistics', statisticsRoutes);
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
 });
 
 // Graceful shutdown

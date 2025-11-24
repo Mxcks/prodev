@@ -25,12 +25,13 @@ model User {
 }
 
 model TypingSession {
-  id        String   @id @default(uuid())
-  userId    String
-  startedAt DateTime @default(now())
-  endedAt   DateTime?
-  duration  Int      @default(60) // Duration in seconds, fixed at 60 for MVP
-  status    String   @default("in_progress") // in_progress, completed, abandoned
+  id          String   @id @default(uuid())
+  userId      String
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  duration    Int      @default(60) // Duration in seconds, fixed at 60 for MVP
+  status      String   @default("in_progress") // in_progress, completed, abandoned
+  keySequence String   // JSON array of keys to press
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   typingResults TypingResult[]
